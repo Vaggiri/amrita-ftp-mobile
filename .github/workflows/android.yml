@@ -9,11 +9,17 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    env:
+      ANDROID_SDK_ROOT: /home/runner/android-sdk
+      ANDROID_HOME: /home/runner/android-sdk
+      P4A_BUILD_TOOL_VERSION: 33.0.2
+      P4A_SDK_VERSION: 33
+      P4A_IGNORE_SETUP_PY: 1
+
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-    # ✅ JAVA 17 (MANDATORY)
     - name: Set up Java 17
       uses: actions/setup-java@v4
       with:
@@ -25,7 +31,7 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install system deps
+    - name: System deps
       run: |
         sudo apt update
         sudo apt install -y \
@@ -34,25 +40,21 @@ jobs:
           libffi-dev libssl-dev \
           python3-pip
 
-    # ✅ INSTALL GOOGLE ANDROID CMDLINE TOOLS (ONLY)
-    - name: Install Android SDK (Google)
+    - name: Install Android SDK (Google only)
       run: |
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        cd $HOME/android-sdk/cmdline-tools
+        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+        cd $ANDROID_SDK_ROOT/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
         unzip commandlinetools-linux-11076708_latest.zip
         mv cmdline-tools latest
 
-        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
+        echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
 
-    # ✅ ACCEPT LICENSES (NOW sdkmanager EXISTS)
     - name: Accept licenses
       run: yes | sdkmanager --licenses
 
-    # ✅ INSTALL STABLE TOOLS ONLY
-    - name: Install SDK packages
+    - name: Install SDK packages (PINNED)
       run: |
         sdkmanager \
           "platform-tools" \
@@ -62,7 +64,7 @@ jobs:
     - name: Install Buildozer
       run: |
         pip install --upgrade pip
-        pip install buildozer cython==0.29.36
+        pip install buildozer==1.5.0 cython==0.29.36
 
     - name: Build APK
       run: |
