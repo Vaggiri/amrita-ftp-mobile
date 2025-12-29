@@ -22,21 +22,33 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y \
-          build-essential \
-          ccache \
-          git \
-          zip \
-          unzip \
           openjdk-17-jdk \
+          unzip zip \
+          libffi-dev libssl-dev \
           python3-pip \
-          libffi-dev \
-          libssl-dev \
-          libsqlite3-dev \
-          zlib1g-dev \
-          libncurses5 \
-          libncurses5-dev \
-          libstdc++6 \
-          libgcc1
+          build-essential
+
+    - name: Install Android SDK
+      run: |
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        cd $HOME/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip commandlinetools-linux-11076708_latest.zip
+        mv cmdline-tools latest
+
+        echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH" >> $GITHUB_ENV
+
+    - name: Accept Android licenses
+      run: |
+        yes | sdkmanager --licenses
+
+    - name: Install Android packages
+      run: |
+        sdkmanager \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.2"
 
     - name: Install Buildozer
       run: |
